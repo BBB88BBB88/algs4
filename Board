@@ -1,0 +1,178 @@
+/*
+ *  javac-algs4 Board.java
+ *  java-algs4 Board
+ */
+
+import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
+
+public class Board {
+    private final int n; // board size
+    private final int[][] board;
+
+    public Board(int[][] tiles) {
+        this.n = tiles.length;
+        board = new int[n][n];
+        // isTileInPlace = new boolean[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                board[i][j] = tiles[i][j];
+            }
+        }
+    }
+
+    // string representation of this board
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        s.append(n + "\n");
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++)
+                s.append(String.format("%2d ", board[i][j]));
+            s.append("\n");
+        }
+        return s.toString();
+    }
+
+    // board dimension n
+    public int dimension() {
+        return n;
+    }
+
+    // number of tiles out of place
+    public int hamming() {
+        int hamming = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                // choose off-place tiles, not off-place blank square
+                if (board[i][j] != i * n + j + 1 && board[i][j] != 0)
+                    hamming++;
+            }
+        }
+        return hamming;
+    }
+
+    // sum of Manhattan distances between tiles and goal
+    public int manhattan() {
+        int manhattan = 0;
+        int rowGoal; // target row of given tile
+        int colGoal; // target col of given tile
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                // choose off-place tiles, not off-place blank square
+                if (board[i][j] != i * n + j + 1 && board[i][j] != 0) {
+                    rowGoal = board[i][j] / n; // target place row is tile value divided by n
+                    colGoal = (board[i][j] - 1) % n; // target place row is tile value mod n - 1
+                    // manhattan distance for 1 given tile is (rowGoal-i) + (colGoal -j)
+                    manhattan = manhattan + (rowGoal - i) + (colGoal - j);
+                }
+            }
+        }
+        return manhattan;
+    }
+
+    // is this board the goal board?
+    public boolean isGoal() {
+        return (manhattan() == 0);
+    }
+
+    // does this board equal y?
+    public boolean equals(Object y) {
+        if (this.getClass() != y.getClass()) return false;
+        else if (this.dimension() != ((Board) y).dimension()) return false;
+        for (int i = 0; i < n; i++) { // compare each tile value
+            for (int j = 0; j < n; j++) {
+                if (this.board[i][j] != ((Board) y).board[i][j])
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    // exchange two tiles in a copy of original board
+    public Board exchange(int x1, int y1, int x2, int y2) {
+        // make a copy of board[][]
+        int[][] copy = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                copy[i][j] = board[i][j];
+            }
+        }
+        int temp = copy[x1][y1];
+        copy[x1][y1] = copy[x2][y2];
+        copy[x2][y2] = temp;
+        return new Board(copy);
+    }
+
+    // all neighboring boards
+    public Iterable<Board> neighbors() {
+        // find blank square
+        int blankX = 0; // x index for blank square
+        int blankY = 0; // y index for blank square
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (board[i][j] == 0) {
+                    blankX = i;
+                    blankY = j;
+                }
+            }
+        }
+        
+        // exchange blank square with neighbor
+        Stack<Board> neighbor = new Stack<Board>(); // create iterable neighbor board stack
+        // find left neighbor
+        if (blankX > 0) {
+            Board temp = exchange(blankX, blankY, blankX - 1, blankY);
+            neighbor.push(temp);
+        }
+        // find right neighbor
+        if (blankX < n - 1) {
+            Board temp = exchange(blankX, blankY, blankX + 1, blankY);
+            neighbor.push(temp);
+        }
+        // find upper neighbor
+        if (blankY > 0) {
+            Board temp = exchange(blankX, blankY, blankX, blankY - 1);
+            neighbor.push(temp);
+        }
+        // find lower neighbor
+        if (blankY < n - 1) {
+            Board temp = exchange(blankX, blankY, blankX, blankY + 1);
+            neighbor.push(temp);
+        }
+        return neighbor;
+    }
+
+
+    // a board that is obtained by exchanging any pair of tiles
+    public Board twin() {
+        int x1 = StdRandom.uniformInt(0, n);
+        int y1 = StdRandom.uniformInt(0, n);
+        int x2 = StdRandom.uniformInt(0, n);
+        int y2 = StdRandom.uniformInt(0, n);
+
+        // make sure (x1,y1) and (x2,y2) not refer to same tile
+        while (x1 == x2 && y1 == y2) {
+            x2 = StdRandom.uniformInt(0, n);
+            y2 = StdRandom.uniformInt(0, n);
+        }
+        Board twin = exchange(x1, y1, x2, y2);
+        return twin;
+    }
+
+    // unit testing (not graded)
+    public static void main(String[] args) {
+        int[][] test = { { 8, 1, 3 }, { 4, 2, 0 }, { 7, 6, 5 } };
+        Board a = new Board(test);
+        StdOut.println("dimension of board is " + a.dimension());
+        StdOut.println("hamming distance is " + a.hamming());
+        StdOut.println("manhattan distance is " + a.manhattan());
+        StdOut.println(a);
+        StdOut.println(a.twin());
+        StdOut.println(a);
+        for (Board board : a.neighbors()) {
+            StdOut.println(board);
+        }
+    }
+
+}
